@@ -9,7 +9,7 @@ Created on Wed Mar  2 10:04:13 2022
 import numpy as np
 import pandas as pd
 import re 
-
+from fuzzysearch import find_near_matches
 
 
 ## cc 基隆給的ground truth
@@ -17,35 +17,37 @@ cc_ground = pd.read_excel('/home/anpo/Desktop/cc_nlp/2018-2020年RA次分類科�
 cc_division = pd.read_excel('/home/anpo/Desktop/cc_nlp/2018-2020年RA次分類科別筆數分析(2022.03.03-含科代號).xlsx', sheet_name = '科代號對照')
 cc_division['科別'].value_counts()
 
-div_ = '骨科'
-div_sheet_name = '骨科CC調查-Infection基隆'
-col_name = '基隆骨科初版/調查其他院區該項衍生書寫內容'
-cc_type = 'Infection'
+# div_ = '骨科'
+# div_sheet_name = '骨科CC調查-Infection基隆'
+# col_name = '基隆骨科初版/調查其他院區該項衍生書寫內容'
+# cc_type = 'Infection'
 
 div_ = '骨科'
-div_sheet_name = '骨科CC調查-Disruption(土城)'
-col_name = '基隆骨科初版/調查其他院區該項衍生書寫內容'
+div_sheet_name = '骨科cc調查_Disruption(土城)'
+col_name = ['第一次文字調查新增項目', '第二次文字調查新增項目(請填報)']
 cc_type = 'Disruption'
 
 
-# div_ = '腦神經外科' #12.8%
-# div_sheet_name = '神外ＣＣ調查-Ｍechanism(嘉義)'
-# col_name = '嘉義神經外科初版/調查其他院區該項衍生書寫內容'
-# cc_type = 'Mechanism'
+
+div_ = '腦神經外科' #12.8%
+div_sheet_name = '神外科CC調查-Mechanism(嘉義)'
+col_name = ['第一次文字調查新增項目', '第二次文字調查新增項目(請填報)']
+# col_name = ['第一次文字調查新增項目', '第二次文字調查新增項目(請填報)', '第三次文字調查新增項目(疾分建議)']
+cc_type = 'Mechanism'
 
 
 
-# div_ = '直腸肛門科' # 83.5%  243/291
-# div_sheet_name = '直腸肛門外科CC調查-Hemorrage(高雄)'
-# col_name = '高雄院區直腸肛門外科初板/調查其他院區該項衍生書寫內容'
-# cc_type = 'Hemorrage'
+div_ = '直腸肛門科' # 83.5%  243/291
+div_sheet_name = '直肛科cc調查-Hemorrage(高雄)'
+col_name = ['第一次文字調查新增項目', '第二次文字調查新增項目(請填報)']
+cc_type = 'Hemorrage'
 
 
 
-# div_ = '泌尿科'  # 88.8%  199/224
-# div_sheet_name = '泌尿科CC調查-Transplant(林口)'
-# col_name = '林口泌尿科初版/其他院區該項衍生書寫內容'
-# cc_type = 'Transplant'
+div_ = '泌尿科'  # 88.8%  199/224
+div_sheet_name = '泌尿科cc調查_Transplant(林口)'
+col_name = ['第一次文字調查新增項目', '第二次文字調查新增項目(請填報)']
+cc_type = 'Transplant'
 
 division_code = cc_division['出院科別代號'][cc_division['科別'] == div_].values
 # n = len(cc_ground['RA次分類(CC項次分類)'])
@@ -77,20 +79,22 @@ def data_type_convert(df):
         df['CHTNO'] = df['CHTNO'].astype(int)
     return df    
 
-# note_d_uni = note_d.drop_duplicates(subset=['CSN','CHTNO']) # 
-note_d_uni = note_d
-note_d_uni_ = note_d_uni[~note_d_uni['CSN'].isna() & ~note_d_uni['CHTNO'].isna()] 
-note_d_uni_ = data_type_convert(note_d_uni_)
+# note_d_uni = note_d
+# note_d_uni_ = note_d_uni[~note_d_uni['CSN'].isna() & ~note_d_uni['CHTNO'].isna()] 
+# note_d_uni_ = data_type_convert(note_d_uni_)
+# note_d_uni_.to_csv('/home/anpo/Desktop/cc_nlp/cc_from_sql_0308/converted_ipd.csv')
+note_d_uni_ = pd.read_csv('/home/anpo/Desktop/cc_nlp/cc_from_sql_0308/converted_ipd.csv')
 
-# note_e_uni = note_e.drop_duplicates(subset=['CSN','CHTNO']) # 
-note_e_uni = note_e
-note_e_uni_ = note_e_uni[~note_e_uni['CSN'].isna() & ~note_e_uni['CHTNO'].isna()] 
-note_e_uni_ = data_type_convert(note_e_uni_)
+# note_e_uni = note_e
+# note_e_uni_ = note_e_uni[~note_e_uni['CSN'].isna() & ~note_e_uni['CHTNO'].isna()] 
+# note_e_uni_ = data_type_convert(note_e_uni_)
+note_e_uni_ = pd.read_csv('/home/anpo/Desktop/cc_nlp/cc_from_sql_0308/converted_ipd2.csv')
 
 # note_f_uni = note_f.drop_duplicates(subset=['CSN','CHTNO']) # 
-note_f_uni = note_f
-note_f_uni_ = note_f_uni[~note_f_uni['CSN'].isna() & ~note_f_uni['CHTNO'].isna()] 
-note_f_uni_ = data_type_convert(note_f_uni_)
+# note_f_uni = note_f
+# note_f_uni_ = note_f_uni[~note_f_uni['CSN'].isna() & ~note_f_uni['CHTNO'].isna()] 
+# note_f_uni_ = data_type_convert(note_f_uni_)
+note_f_uni_ = pd.read_csv('/home/anpo/Desktop/cc_nlp/cc_from_sql_0308/converted_ipd3.csv')
 
 cc_ground_re = data_type_convert(cc_ground_re)
    
@@ -170,20 +174,27 @@ div_case = gb_data['出院科別'].isin(division_code)
 #        div_case_note_idx.append(matched_note_index[idc])
 #        div_case_gt_idx.append(i)
 
+# note_text = gb_data.loc[div_case,['ABSTO', 'ABSTO1', 'ABSTO2', 'ABSTA', 'ABSTA1',
+#        'ABSTA2', 'ABSTP', 'ABSTP1', 'ABSTP2','DSTOP', 'DSTTXPR','ADMPRET', 'ADMPRET1','ADMPASS1', 'ADMPASS2', 'ADMIMPR', 'ADMPLAN']]
 note_text = gb_data.loc[div_case,['ABSTO', 'ABSTO1', 'ABSTO2', 'ABSTA', 'ABSTA1',
-       'ABSTA2', 'ABSTP', 'ABSTP1', 'ABSTP2','DSTOP', 'DSTTXPR','ADMPRET', 'ADMPRET1','ADMPASS1', 'ADMPASS2', 'ADMIMPR', 'ADMPLAN']]
+       'ABSTA2', 'ABSTP', 'ABSTP1', 'ABSTP2','DSTEXC','DSTOP', 'DSTTXPR','ADMPRET', 'ADMPRET1','ADMPASS1', 'ADMPASS2', 'ADMIMPR', 'ADMPLAN']]
 div_gt = gb_data.loc[div_case,'RA次分類(CC項次分類)']
 
 idt = gb_data.loc[div_case,['CSN', 'CHTNO']].reset_index()
 
 # keyword
-out = pd.read_excel('/home/anpo/Desktop/cc_nlp/0-合併症書寫內容調查-彙總版20220307.xlsx',sheet_name = div_sheet_name)
-allkeys = out[col_name]
+out = pd.read_excel('/home/anpo/Desktop/cc_nlp/0-彙總版-第二次文字調查(4月11前回覆).xls',sheet_name = div_sheet_name)
+allkeys = pd.concat([out[col_name[0]],out[col_name[1]]])
 allkeys = allkeys.dropna()
+# allkeys = allkeys.drop([22,23,24,25,26,27])
+
+# out = pd.read_excel('/home/anpo/Desktop/cc_nlp/0-回覆檔-第三次文字調查_4月18疾分.xls',sheet_name = div_sheet_name)
+# allkeys = pd.concat([out[col_name[0]],out[col_name[1]],out[col_name[2]]])
+# allkeys = allkeys.dropna()
 
 
 
-def keyword_match(note_text, allkeys, div_gt):
+def keyword_match(note_text, allkeys, div_gt, use_fuzz=False):
 
     note_text_dropna = []
     assert(len(note_text)==len(div_gt)) 
@@ -210,10 +221,11 @@ def keyword_match(note_text, allkeys, div_gt):
     fn = 0
     
     tn_idc = []
-    
+    matched_keys_per_txt = []
     whether_get_keyword = np.zeros((1,len(note_text_merge))).astype(bool)[0]
     for idc, per_txt in enumerate(note_text_merge):
     
+        matched_keys = []
         cnt2 = 0
         for index, value in allkeys.items():
             value = value.replace('.','')
@@ -222,10 +234,20 @@ def keyword_match(note_text, allkeys, div_gt):
             value = re.sub(' +','',value)
             # print(value.lower())
             
-            b = re.search(value,per_txt.lower())
-            if b!=None: 
-               cnt2+=1
-        
+            # re search
+            if use_fuzz:
+            # fuzzy search 
+               b = find_near_matches(value.lower(),per_txt.lower(), max_l_dist=1)               
+            # print(b)
+               if b!=[]:
+                  matched_keys.append(value)
+                  cnt2+=1
+            else: 
+               b = re.search(value.lower(),per_txt.lower())        
+               if b!=None: 
+                  matched_keys.append(value)
+                  cnt2+=1
+               
         if cnt2>0:
            whether_get_keyword[idc] = True    
         
@@ -237,19 +259,35 @@ def keyword_match(note_text, allkeys, div_gt):
         if (cnt2>0) & (div_gt.values[idc] != cc_type):
            fp+=1    
         if (cnt2==0) & (div_gt.values[idc] != cc_type):
-           fn+=1 
-    
+           fn+=1
+           
+        matched_keys_per_txt.append(matched_keys)
     print(div_gt.value_counts())
     print('tp:{}'.format(tp))
     print('tn:{}'.format(tn))
     print('fp:{}'.format(fp))
     print('fn:{}'.format(fn))
  
-    return tn_idc, note_text_dropna
+    return tn_idc, note_text_dropna, matched_keys_per_txt
     
-tn_idc, note_text_dropna = keyword_match(note_text, allkeys, div_gt)
+tn_idc, note_text_dropna, matched_keys_per_txt = keyword_match(note_text, allkeys, div_gt, use_fuzz=False)
 
 
+
+# full list identifier
+#idt
+pdi = idt.loc[2, ['CSN','CHTNO']].values
+write_txt(pdi, note_text_dropna[2])
+
+# write function
+def write_txt(pdi, main_txt):
+    with open('/home/anpo/Desktop/cc_nlp/關鍵字沒抓到的cc/'+'CNS_'+str(pdi[0])+'_CHTNO_'+str(pdi[1])+'.txt', 'w') as f:
+         for idc, j in main_txt.items():
+             f.write('==============================')
+             f.write(idc)
+             f.write('\n')
+             f.write(j)
+             f.write('\n')
 
 # 只看沒抓到的
 
@@ -259,14 +297,16 @@ identifier = idt.loc[tn_idc,['CSN','CHTNO']].values
 
 for idc, i in enumerate(txt):
     pdi = identifier[idc]
-    with open('/home/anpo/Desktop/cc_nlp/關鍵字沒抓到的cc/'+'CNS_'+str(pdi[0])+'_CHTNO_'+str(pdi[1])+'.txt', 'w') as f:
-         for idc, j in i.items():
-             f.write('==============================')
-             f.write(idc)
-             f.write('\n')
-             f.write(j)
-             f.write('\n')
-             # f.write('')
+    write_txt(pdi, i)
+    
+    # with open('/home/anpo/Desktop/cc_nlp/關鍵字沒抓到的cc/'+'CNS_'+str(pdi[0])+'_CHTNO_'+str(pdi[1])+'.txt', 'w') as f:
+    #      for idc, j in i.items():
+    #          f.write('==============================')
+    #          f.write(idc)
+    #          f.write('\n')
+    #          f.write(j)
+    #          f.write('\n')
+
 
 ids = pd.DataFrame(identifier,columns = {'CSN','CHTNO'})
 
