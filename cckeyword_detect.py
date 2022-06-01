@@ -17,10 +17,11 @@ cc_ground = pd.read_excel('/home/anpo/Desktop/cc_nlp/2018-2020年RA次分類科�
 cc_division = pd.read_excel('/home/anpo/Desktop/cc_nlp/2018-2020年RA次分類科別筆數分析(2022.03.03-含科代號).xlsx', sheet_name = '科代號對照')
 cc_division['科別'].value_counts()
 
-# div_ = '骨科'
-# div_sheet_name = '骨科CC調查-Infection基隆'
-# col_name = '基隆骨科初版/調查其他院區該項衍生書寫內容'
-# cc_type = 'Infection'
+div_ = '骨科'
+div_sheet_name = '骨科CC調查-Infection基隆'
+col_name = '基隆骨科初版/調查其他院區該項衍生書寫內容'
+cc_type = 'Infection'
+
 
 div_ = '骨科'
 div_sheet_name = '骨科cc調查_Disruption(土城)'
@@ -31,8 +32,7 @@ cc_type = 'Disruption'
 
 div_ = '腦神經外科' #12.8%
 div_sheet_name = '神外科CC調查-Mechanism(嘉義)'
-col_name = ['第一次文字調查新增項目', '第二次文字調查新增項目(請填報)']
-# col_name = ['第一次文字調查新增項目', '第二次文字調查新增項目(請填報)', '第三次文字調查新增項目(疾分建議)']
+col_name = ['第一次文字調查新增項目', '第二次文字調查新增項目(請填報)', '第三次文字調查新增項目(疾分建議)']
 cc_type = 'Mechanism'
 
 
@@ -51,6 +51,26 @@ cc_type = 'Transplant'
 
 division_code = cc_division['出院科別代號'][cc_division['科別'] == div_].values
 # n = len(cc_ground['RA次分類(CC項次分類)'])
+
+
+
+
+# keyword
+out = pd.read_excel('/home/anpo/Desktop/cc_nlp/0-合併症書寫內容調查-彙總版20220307.xlsx',sheet_name = div_sheet_name)
+allkeys = out[col_name]
+allkeys = allkeys.dropna()
+
+out = pd.read_excel('/home/anpo/Desktop/cc_nlp/0-彙總版-第二次文字調查(4月11前回覆).xls',sheet_name = div_sheet_name)
+allkeys = pd.concat([out[col_name[0]],out[col_name[1]]])
+allkeys = allkeys.dropna()
+# # allkeys = allkeys.drop([22,23,24,25,26,27])
+
+out = pd.read_excel('/home/anpo/Desktop/cc_nlp/0-回覆檔-第三次文字調查_4月18疾分.xls',sheet_name = div_sheet_name)
+allkeys = pd.concat([out[col_name[0]],out[col_name[1]],out[col_name[2]]])
+allkeys = allkeys.dropna()
+
+
+
 
 # 去掉gt重複筆數 
 # cc_ground_uni = cc_ground.drop_duplicates(subset=['住院號','病歷號','住院日','出院日'])
@@ -96,8 +116,9 @@ note_e_uni_ = pd.read_csv('/home/anpo/Desktop/cc_nlp/cc_from_sql_0308/converted_
 # note_f_uni_ = data_type_convert(note_f_uni_)
 note_f_uni_ = pd.read_csv('/home/anpo/Desktop/cc_nlp/cc_from_sql_0308/converted_ipd3.csv')
 
-cc_ground_re = data_type_convert(cc_ground_re)
-   
+cc_ground_re = data_type_convert(cc_ground_re)   
+# cc_ground_re.to_csv('/home/anpo/Desktop/cc_nlp/cc_from_sql_0308/cc_ground.csv')
+# cc_ground_re = pd.read_csv('/home/anpo/Desktop/cc_nlp/cc_from_sql_0308/cc_ground.csv')
 
 DATA = []
 DATA.append(cc_ground_re)
@@ -118,6 +139,9 @@ for aa in DATA:
         # note上取最後一筆喔 
         tmp = aa.groupby(['CSN','CHTNO'], as_index=False).last()
         gb_data = gb_data.merge(tmp[['CSN']+[ii for ii in tmp.keys() if ii not in gb_data.keys()]], on='CSN', how='left')
+
+
+
 
 
 # A = cc_ground_uni.filter(items=['CSN','CHTNO'])
@@ -179,19 +203,9 @@ div_case = gb_data['出院科別'].isin(division_code)
 note_text = gb_data.loc[div_case,['ABSTO', 'ABSTO1', 'ABSTO2', 'ABSTA', 'ABSTA1',
        'ABSTA2', 'ABSTP', 'ABSTP1', 'ABSTP2','DSTEXC','DSTOP', 'DSTTXPR','ADMPRET', 'ADMPRET1','ADMPASS1', 'ADMPASS2', 'ADMIMPR', 'ADMPLAN']]
 div_gt = gb_data.loc[div_case,'RA次分類(CC項次分類)']
+loc_gt = gb_data.loc[div_case,'院區']
 
 idt = gb_data.loc[div_case,['CSN', 'CHTNO']].reset_index()
-
-# keyword
-out = pd.read_excel('/home/anpo/Desktop/cc_nlp/0-彙總版-第二次文字調查(4月11前回覆).xls',sheet_name = div_sheet_name)
-allkeys = pd.concat([out[col_name[0]],out[col_name[1]]])
-allkeys = allkeys.dropna()
-# allkeys = allkeys.drop([22,23,24,25,26,27])
-
-# out = pd.read_excel('/home/anpo/Desktop/cc_nlp/0-回覆檔-第三次文字調查_4月18疾分.xls',sheet_name = div_sheet_name)
-# allkeys = pd.concat([out[col_name[0]],out[col_name[1]],out[col_name[2]]])
-# allkeys = allkeys.dropna()
-
 
 
 def keyword_match(note_text, allkeys, div_gt, use_fuzz=False):
@@ -211,7 +225,8 @@ def keyword_match(note_text, allkeys, div_gt, use_fuzz=False):
         # 
         vv = vv.replace('\r','')
         vv = vv.replace('\n','')
-        vv = re.sub(' +','',vv)       
+        vv = re.sub(' +','',vv)  
+        # vv = vv.lower().split()
         
         note_text_merge.append(vv)
     
@@ -232,19 +247,26 @@ def keyword_match(note_text, allkeys, div_gt, use_fuzz=False):
             value = value.replace(',','')
             # remove extra space 
             value = re.sub(' +','',value)
-            # print(value.lower())
+            # value = value.lower().split()
             
+            # default = False
+            # for n_word in value:
+            #     if n_word in per_txt:
+            #        default = default & True
+            
+            # if default == True:   
+            #    cnt2+=1 
             # re search
             if use_fuzz:
             # fuzzy search 
-               b = find_near_matches(value.lower(),per_txt.lower(), max_l_dist=1)               
+                b = find_near_matches(value.lower(),per_txt.lower(), max_l_dist=1)               
             # print(b)
-               if b!=[]:
+                if b!=[]:
                   matched_keys.append(value)
                   cnt2+=1
             else: 
-               b = re.search(value.lower(),per_txt.lower())        
-               if b!=None: 
+                b = re.search(value.lower(),per_txt.lower())        
+                if b!=None: 
                   matched_keys.append(value)
                   cnt2+=1
                
@@ -267,13 +289,18 @@ def keyword_match(note_text, allkeys, div_gt, use_fuzz=False):
     print('tn:{}'.format(tn))
     print('fp:{}'.format(fp))
     print('fn:{}'.format(fn))
+    results = [tp,tn,fp,fn]
  
-    return tn_idc, note_text_dropna, matched_keys_per_txt
+    return tn_idc, note_text_dropna, matched_keys_per_txt, results
     
-tn_idc, note_text_dropna, matched_keys_per_txt = keyword_match(note_text, allkeys, div_gt, use_fuzz=False)
+tn_idc, note_text_dropna, matched_keys_per_txt, _ = keyword_match(note_text, allkeys, div_gt, use_fuzz=False)
+
+# idv key evaluation
 
 
 
+
+#找出沒抓到的
 # full list identifier
 #idt
 pdi = idt.loc[2, ['CSN','CHTNO']].values
@@ -307,11 +334,97 @@ for idc, i in enumerate(txt):
     #          f.write(j)
     #          f.write('\n')
 
-
 ids = pd.DataFrame(identifier,columns = {'CSN','CHTNO'})
-
 ids.to_excel('true_negative_IDs.xlsx')
-# pd.read_csv('/home/anpo/Desktop/cc_nlp/0-骨科合併症書寫內容調查-20220214彙總版.xlsx',sheet_name = '骨科CC調查-Infectiom(要填)')
+
+# 院區分開分析
+
+for loci in loc_gt.unique():
+    note_loc = note_text[loc_gt == loci]
+    gt_loc = div_gt[loc_gt == loci]
+    _, _, _, r = keyword_match(note_loc, allkeys, gt_loc, use_fuzz=False)
+    sen = r[0]/(r[0]+r[1])
+    print('院區:{}'.format(loci) )
+    print('sen:{}'.format(sen))
+  
+   
+    
+# 抓出關鍵字
+extract_keys = pd.DataFrame(matched_keys_per_txt)
+
+k = div_gt == cc_type
+keys = extract_keys[k.values]
+
+for i in range(keys.shape[1]):
+    b = keys.iloc[:,i]
+    if i == 0:
+       base = b
+    else:
+       base = pd.concat([base,b])
+
+counts = base.value_counts()
+
+import matplotlib.pyplot as plt
+# from matplotlib.pyplot import figure
+import math
+# sum_result = np.cumsum(counts.values)/sum(counts.values)
+# cut = np.where(sum_result>0.9)[0][0]
+
+# figure(figsize=(10, 10), dpi=80)
+# plt.barh(counts.index, counts.values)
+# plt.plot([0, max(counts.values)], [cut, cut])
+# plt.text(max(counts.values),len(counts.index),  sum(counts.values))
+
+def truncate(f, n):
+    return math.floor(f * 10 ** n) / 10 ** n
+
+
+
+
+
+# prcent = counts.values/sum(counts.values)
+# 個別關鍵字權重
+cnt = 0
+f1s = []
+sens = []
+for k,v in counts.iteritems():
+    key1 = pd.Series([k])
+    _, _, _, r = keyword_match(note_text, key1, div_gt, use_fuzz=False)    
+    sen = r[0]/(r[0]+r[1])
+    acc = (r[0]+r[3])/sum(r)
+    prc = r[0]/(r[0]+r[2])
+    # try:        
+    f1 = 2*prc*sen/(prc+sen)
+    f1 = truncate(f1, 2)
+    # except:
+    #     f1 = np.nan
+    f1s.append(str(f1))
+    sen = truncate(sen, 2)
+    sens.append(sen)
+    cnt+=1
+
+
+fig, ax = plt.subplots()
+fig = plt.gcf()
+fig.set_size_inches(18.5, 10.5)
+    
+# xh = len(counts.index)
+bar1 = ax.barh(range(len(counts.index)), counts.values)
+
+cnt = 0
+for rect in bar1:
+    # height = rect.get_height()
+    
+    # ax.text(counts.values[cnt], rect.get_y(), f1s[0])
+    # print(xh-cnt)
+    ax.text(counts.values[cnt], cnt, sens[cnt])
+    cnt+=1      
+
+ax.set_yticks(range(len(counts.index)))
+ax.set_yticklabels(counts.index)
+
+
+# pd.('/home/anpo/Desktop/cc_nlp/0-骨科合併症書寫內容調查-20220214彙總版.xlsx',sheet_name = '骨科CC調查-Infectiom(要填)')
 
 # re.match(value,a)
 
