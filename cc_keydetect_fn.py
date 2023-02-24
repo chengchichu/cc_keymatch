@@ -12,8 +12,8 @@ import re
 from fuzzysearch import find_near_matches
 import os
 # import schedule
-import cc_config
 import logging# functions
+import sys
 
 def keyword_match2(note_text, allkeys, use_fuzz=False):
 
@@ -55,11 +55,12 @@ def keyword_match2(note_text, allkeys, use_fuzz=False):
         # remove extra space 
         value = re.sub(' +','',value)
         # re search
-        if use_fuzz:      # fuzzy search 
+        if (use_fuzz) & (value.lower()!='kink') :      # fuzzy search
             b = find_near_matches(value.lower(),per_txt.lower(), max_l_dist=1)               
             if b!=[]:
               matched_keys.append(value)
               cnt2+=1
+              # print('hello')
         else: 
             b = re.search(value.lower(),per_txt.lower())        
             if b!=None: 
@@ -78,153 +79,123 @@ def keyword_match2(note_text, allkeys, use_fuzz=False):
         
     return ans, matched_keys_per_txt
 
-def main(cc_config, meta_data):
-       
-    # A = os.path.join(cc_config.input_folder,os.listdir(cc_config.input_folder)[0])
-    # note_text = pd.read_csv(A)
-    # note_text.iloc[0]['ABSTO']
-    
-    cols = ['CSN','CHTNO','type of note', 'txt']
-    
-    files = os.listdir(cc_config.input_folder)
-    for ifile in files:
-        imedata = meta_data.copy()
-        with open(os.path.join(cc_config.input_folder,ifile)) as f:
-             txt = f.read()
-    
-        imedata.append(txt)
-        
-        a_dict = {}
-        assert len(cols) == len(imedata)
-        for i, j in zip(cols,imedata):
-            a_dict[i] = j 
 
-        outfile = '病例號 {} 住院號 {} 之 {} 開始共病關鍵字偵測'.format(meta_data[0],meta_data[1],meta_data[2])
-        logging.info(outfile)
-        print(outfile)
-    
-        note_text0 = pd.DataFrame.from_dict([a_dict])
-        
-        # print(note_text0)
-        
-        # 比對
-        cc_ans, matched_keys_per_txt = cc_detect(note_text0)
-        
-        file_cont = ''
-        if cc_ans == 'yes': 
-            
-           file_cont += '書寫出現關鍵診斷:{}'.format(matched_keys_per_txt)
-           file_cont += '\n'
-           file_cont += '該病人可能有{}等手術合併症, 提醒您事實介入相關處置'.format('infection')
-                 
-           # 紀錄檔
-           # record = []
-           record = note_text0[['CSN','CHTNO','type of note']]
-           record['cc_type'] = 'Infection'
-           
-           # print(note_text0)
-           # print(record)
-           if  os.listdir(cc_config.history_folder):
-               
-               # 一律把新紀錄加入
-               
-               hist_files = pd.read_csv(cc_config.history_file)   
-               new_history = pd.concat([hist_files,record])
-               
-               new_history = new_history.drop_duplicates()
-               new_history.to_csv(cc_config.history_file, index=False)
-            
-           else:
-               record.to_csv(cc_config.history_file, index=False)    
-               print('first time inference, record is saved')   
-            
-        else:
-           file_cont += '未偵測到任何cc相關文字'
-        
-        logging.info(file_cont)           
-        print(file_cont)
-        print()
-        # save the results
-      
-        # print('hello')
-        with open(os.path.join(cc_config.output_folder,outfile+'.txt'),'w') as f:
-             f.write(file_cont)
-             
-  
-             
-        
-def cc_detect(note_text):
+def cc_detect(note_text, series_keys):
 
     assert isinstance(note_text, pd.DataFrame) == True
     # assert 'CSN' in note_text
     # assert 'CHTNO' in note_text
     assert len(note_text.columns) > 2  # 除了identifier 還有其他資料
     
-    # load keys
-    assert os.path.exists(cc_config.key_file), 'error!, cc keys must exist'
-    allkeys = pd.read_csv(cc_config.key_file)           
-    series_keys = allkeys[allkeys.columns[0]] # 轉成series格式
-    
-    # print(series_keys)
-     # save the keys
-     # allkeys = ccdata_parse.allkeys
-     # allkeys = allkeys.reset_index(drop=True)
-     # allkeys.to_csv('/home/anpo/Desktop/cc_nlp/keys/mechanism_keys.csv', index=False)
-    
      # cc key detect...
     # ans, yes_ids, matched_keys_per_txt = keyword_match2(note_text, series_keys, use_fuzz=False)
-    ans, matched_keys_per_txt = keyword_match2(note_text, series_keys, use_fuzz=False)
-    # print(yes_ids)
+    ans, matched_keys_per_txt = keyword_match2(note_text, series_keys, use_fuzz=True)
     
-
     return ans, matched_keys_per_txt
-    
 
-if __name__ == '__main__':
-   
-   # initiate log file
+
+def main(exec_file, input_file):
+    
+    # parsing the paths
+    dirname = os.path.dirname(exec_file)
+    print('執行檔案所在的資料夾:{}'.format(dirname))
+    
+    assert len(dirname)>0, '無檔案路徑'
+    
+    dirname_file = os.path.dirname(input_file)
+    print('輸入檔案所在的資料夾:{}'.format(dirname_file))
+    
+    assert len(dirname)>0, '無檔案路徑'
+    
+    # initiate log file
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)
    
-    logging.basicConfig(level=logging.DEBUG, filename=os.path.join(cc_config.log_folder, 'cc_keyfn_log.log'), filemode='w',
+    logging.basicConfig(level=logging.DEBUG, filename=os.path.join('cc_keyfn_log.log'), filemode='w',
 	format='[%(asctime)s %(levelname)-8s] %(message)s',
 	datefmt='%Y%m%d %H:%M:%S',
 	)
 
     logging.info('共病偵測log開始')
-
-   # 執行的方式 input哪來, output那？資料清理
-    if not os.listdir(cc_config.input_folder):  
-       print('輸入資料夾是空的')       
-       logging.warning('輸入資料夾是空的')
-    else:  
        
-       meta_data = ['12340593',33456987,'手術紀錄']
+    # read
+    with open(input_file, 'r', encoding='utf-8') as f:
+         lines = f.readlines()
+
+    # cols = ['CSN','CHTNO','type of note', 'txt']
+    a_dict = {}
+    a_dict['CSN'] = lines[0].replace('\n','')
+    a_dict['CHTNO'] = lines[1].replace('\n','')
+    a_dict['txt'] = ''.join(lines[2:])  
+  
+    out_file = lines[0].replace('\n','')+'outputaiinf'
+    
+    logging.info(out_file)
+    print('輸出檔案:'+out_file)
+    
+    note_text0 = pd.DataFrame.from_dict([a_dict])
         
-       main(cc_config, meta_data)
+    # load key
+    key_file = os.path.join(dirname,'cc_keys.csv')
+    assert os.path.exists(key_file), 'error!, cc keys must exist'
+    allkeys = pd.read_csv(key_file, on_bad_lines='skip')           
+    series_keys = allkeys[allkeys.columns[0]] # 轉成series格式
+    
+    # 比對
+    cc_ans, matched_keys_per_txt = cc_detect(note_text0,series_keys)
+        
+    file_cont = ''
+    if cc_ans == 'yes': 
+            
+       file_cont += allkeys.keys()[0].strip()
+       file_cont += '\n'
+       
+       print(matched_keys_per_txt)
+       
+       matched_keywords = ''
+       for i in matched_keys_per_txt[0]:
+           
+           matched_keywords += i+','
+       
+       matched_keywords = matched_keywords[0:len(matched_keywords)-1] 
+       
+       file_cont += matched_keywords
+               
+    else:
+       
+       file_cont += 'N'
+        
+    logging.info(file_cont)           
+    print(cc_ans)
+    
+    # save the results
+    # print('hello')
+    with open(os.path.join(dirname_file,out_file+'.txt'),'w') as f:
+         f.write(file_cont)
+            
+            
+
+if __name__ == '__main__':
+   
+   # verify the input 
+   print('輸入檔案:{}'.format(sys.argv[1]))
+   print('執行檔所在位置:{}'.format(sys.argv[0]))
+   
+   main(sys.argv[0], sys.argv[1])
+   
+   
+   
+   # # 執行的方式 input哪來, output那？資料清理
+   #  if not os.listdir(cc_config.input_folder):  
+   #     print('輸入資料夾是空的')       
+   #     logging.warning('輸入資料夾是空的')
+   #  else:  
+       
+   #     meta_data = ['12340593',33456987,'手術紀錄']
+        
+       # main(cc_config, meta_data)
        
      
 
 
- # 設定位置把歷史檔吐在那裡
-    # if os.listdir(cc_config.history_folder):
-    #    hist = pd.read_csv(cc_config.history_file)
-    #    hist['CT'] = hist['CSN']+hist['CHTNO'].astype(str)     
-    #    note_text['CT'] = note_text['CSN']+note_text['CHTNO'].astype(str)
-        
-    #    wheather_in_history = note_text['CT'].isin(hist['CT'].values)
-        
-    #     # report cc, if it was in history
-    #    if history_reminder:           
-    #       for idc, i in enumerate(Nans):
-    #           if wheather_in_history.values[idc]:
-    #              Nans[idc] = 'yes'
-                  
-    #     # 是否把新ID增加          
-    #    if Add_ID:  
-    #       new_history = pd.concat([hist,yes_ids])
-    #       new_history.to_csv(cc_config.history_file, index=False)
-           
-    # else: 
-    #    yes_ids.to_csv(cc_config.history_file, index=False)    
-    #    print('first time inference, record is saved')
+ 
