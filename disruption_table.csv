@@ -1,0 +1,40 @@
+,keys,sen,prc
+0,disruption,0.152542372881356,0.098901098901099
+1,dehiscence,0.11864406779661,0.225806451612903
+2,poor wound healing,0.016949152542373,0.01
+3,active wound bleeding,0,0
+4,wound disruption,0.11864406779661,0.368421052631579
+5,wound dehiscence,,
+6,surgical wound disruption,0.033898305084746,0.333333333333333
+7,surgical wound dehiscence,,
+8,suture disruption,,
+9,suture dehiscence,0,0
+10,incision disruption,,
+11,incision dehiscence,,
+12,Implant breakage,,
+13,dislocation,0.050847457627119,0.008021390374332
+14,implant loosening,0,0
+15,implant exposure,0.016949152542373,0.047619047619048
+16,prosthesis exposure,0.016949152542373,0.5
+17,bone exposure,0.033898305084746,0.133333333333333
+18,wound poor healing,0.186440677966102,0.082089552238806
+19,wound open,0.033898305084746,0.25
+20,persistent unhealing wound,0.016949152542373,1
+21,oozing,0.11864406779661,0.014141414141414
+22,wound healing,0.050847457627119,0.02054794520548
+23,wound skin defect,0,0
+24,wound serous discharge ,0.033898305084746,0.5
+25,wound interstitial fluid leakage,,
+26,Implant protrusion,,
+27,Implant  broken,,
+28,Implant immigrant,,
+29,Implant malposition,,
+30,Implant subluxation,,
+31,swelling,0.152542372881356,0.007512520868114
+32, erythema,0.067796610169492,0.010752688172043
+33,wound dehiscense,0.559322033898305,0.458333333333333
+34,wound dehiscence,,
+35,wound dehisence,,
+36,wound dehisence,,
+37,wound dehiscense,0.559322033898305,0.458333333333333
+38,wound dihescence,,

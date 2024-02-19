@@ -1,0 +1,21 @@
+,keys,sen,prc
+0,wound infection,0.013513513513514,0.037037037037037
+1,superficial wound infection,,
+2,deep wound infection,,
+3,lyphocele,,
+4,infection,0.439189189189189,0.210355987055016
+5,rejection,0.695945945945946,0.971698113207547
+6,cellulitis,0.006756756756757,0.111111111111111
+7,CMV infection,0.027027027027027,1
+8,BKV infection,,
+9,abscess,0.047297297297297,0.116666666666667
+10,wound reddish,0,0
+11,graft nonfunctional,,
+12,upper respiratory infection,0.006756756756757,1
+13,urinary tract infection,0.128378378378378,0.202127659574468
+14,urinoma,0.006756756756757,0.076923076923077
+15,hydronephrosis,0.121621621621622,0.107142857142857
+16,urine leakage,0.02027027027027,0.12
+17,diarrhera,,
+18,Acute kidney injury,0.094594594594595,0.358974358974359
+19,Ultrasonic guidance for needle placement,,
